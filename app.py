@@ -24,28 +24,48 @@ with st.form("tiktok_form"):
     
     submitted = st.form_submit_button("🚀 Buat Skrip Sekarang")
 
+def get_recommended_hashtags(style, produk):
+    tag_produk = f"#{produk.lower().replace(' ', '')}"
+    
+    if style == "Spill Harga Murah":
+        hashtags = f"{tag_produk} #fypindonesia #viral2026 #trendingindonesia #kontenkekinian #tiktoktrend #harianviral"
+    elif style == "Soft Sell / Storytelling":
+        hashtags = f"{tag_produk} #inspirasi2026 #kontenpositif #idekreatif #kreatorindo #vibespositif #edukatif"
+    elif style == "Review Jujur":
+        hashtags = f"{tag_produk} #trendingnow #tiktokindo #videoviral #kreatifbanget #foryoupage #contentcreator"
+    else:  # Hard Sell
+        hashtags = f"{tag_produk} #fypindonesia #foryou #viralindonesia #explorepage #supportlokal #tiktokcommunity"
+        
+    return hashtags
+
 def generate_script_free(produk, promo, style):
-    # Header Perintah Lengkap Otomatis Sesuai Format
+    # 1. Header Perintah Kustom di Bagian Paling Atas
     header_perintah = f"""Gunakan gambar produk yang diberikan sebagai referensi utama dan pertahankan bentuk produk secara akurat. Buat video promosi realistis untuk: {produk}.
 Format: Vertikal 9:16
 Durasi: tepat 20 detik
 Gaya: realistis, profesional, clean, modern, seperti video review produk elektronik
 Voice-over: Bahasa Indonesia, suara natural, jelas, energik
 Musik: tidak ada\n\n"""
+
+    # 2. Catatan Aturan Penting di Bagian Paling Akhir
+    footer_aturan = """\n\nATURAN PENTING
+Gunakan hanya produk dan perlengkapan yang terlihat pada gambar referensi. Jangan mengubah warna, bentuk, jumlah, atau desain produk. Jangan menambahkan produk atau fitur yang tidak terlihat. Jangan membuat klaim berlebihan. Jangan menampilkan api, percikan listrik, atau asap berlebihan. Jangan menggunakan musik. Pastikan voice-over terdengar natural dan seluruh video tepat 20 detik."""
+
+    hashtags = get_recommended_hashtags(style, produk)
     
     API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-    prompt = f"<s>[INST] Buatkan skrip TikTok Shop singkat untuk produk {produk} dengan keunggulan {promo} dan gaya {style}. Berikan HOOK, ISI, dan CALL TO ACTION dalam bahasa Indonesia. [/INST]"
+    prompt = f"<s>[INST] Buatkan skrip TikTok Shop singkat untuk produk {produk} dengan keunggulan {promo} dan gaya {style}. Berikan HOOK, ISI, dan CALL TO ACTION dalam bahasa Indonesia. Gunakan hashtag: {hashtags} [/INST]"
     
     try:
         response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 500}}, timeout=10)
         if response.status_code == 200:
             result = response.json()
             generated = result[0]["generated_text"].replace(prompt, "").strip()
-            return header_perintah + generated
+            return header_perintah + generated + footer_aturan
     except Exception:
         pass
     
-    # Template Otomatis Instan jika API sedang padat
+    # Template Otomatis Instan jika Server API Sedang Padat
     if style == "Spill Harga Murah":
         body = f"""📌 HOOK (Detik 0-3)
 Teks Layar: JANGAN BELI {produk.upper()} SEBELUM LIHAT INI! 😱
@@ -61,7 +81,7 @@ Voiceover: "Langsung klik keranjang kuning di kiri bawah sebelum stok promonya h
 
 📝 CAPTION & HASHTAG
 Caption: Promo {produk} hari ini! {promo}. Yuk checkout sekarang!
-Hashtag: #{produk.lower().replace(' ', '')} #tiktokshop #racuntiktok #spillbarang"""
+Hashtag: {hashtags}"""
     else:
         body = f"""📌 HOOK (Detik 0-3)
 Teks Layar: SOLUSI BUAT KAMU! ✨
@@ -77,9 +97,9 @@ Voiceover: "Mumpung lagi ready stock, langsung klik keranjang kuning di kiri baw
 
 📝 CAPTION & HASHTAG
 Caption: Rekomendasi {produk} terbaik! {promo}.
-Hashtag: #{produk.lower().replace(' ', '')} #tiktokshop #racuntiktok #fyp"""
+Hashtag: {hashtags}"""
 
-    return header_perintah + body
+    return header_perintah + body + footer_aturan
 
 # Proses Saat Tombol Diklik
 if submitted:
