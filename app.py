@@ -1,18 +1,18 @@
 import streamlit as st
-from google import genai
+import base64
+from openai import OpenAI
 from PIL import Image
 
 # Konfigurasi Tampilan Aplikasi
-st.set_page_config(page_title="AI TikTok Affiliate Generator", layout="centered")
+st.set_page_config(page_title="AI TikTok Affiliate Generator (OpenAI)", layout="centered")
 
 st.title("🚀 TikTok Affiliate Content Generator AI")
-st.write("Generate skrip, storytelling, dan panduan visual video TikTok Affiliate dalam hitungan detik.")
+st.write("Generate skrip, storytelling, dan panduan visual video TikTok Affiliate dalam hitungan detik menggunakan OpenAI.")
 
 # Form Input Pengguna
 with st.form("affiliate_form"):
     nama_produk = st.text_input("Nama Produk", placeholder="Contoh: Solder 80W / Skincare Brightening")
     
-    # Fitur Upload Gambar Referensi
     uploaded_image = st.file_uploader(
         "Upload Gambar Referensi Produk (Opsional)", 
         type=["jpg", "jpeg", "png", "webp"],
@@ -37,17 +37,26 @@ with st.form("affiliate_form"):
         ]
     )
     
+    # Ambil default API Key dari secrets jika ada
+    default_key = st.secrets.get("OPENAI_API_KEY", "")
+    api_key_input = st.text_input("Masukkan OpenAI API Key", value=default_key, type="password", help="Dapatkan API key dari platform OpenAI")
+    
     submitted = st.form_submit_button("✨ Generate Konten Sekarang")
+
+# Fungsi pembantu untuk mengonversi gambar ke base64 (Format OpenAI Vision)
+def encode_image(uploaded_file):
+    return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
 
 # Proses saat Tombol Diklik
 if submitted:
     if not nama_produk:
         st.error("Mohon isi Nama Produk terlebih dahulu!")
+    elif not api_key_input:
+        st.error("Mohon masukkan OPENAI_API_KEY yang valid!")
     else:
         try:
-            # Mengambil API Key dari Streamlit Secrets
-            api_key = st.secrets["GEMINI_API_KEY"]
-            client = genai.Client(api_key=api_key)
+            # Inisialisasi Klien OpenAI
+            client = OpenAI(api_key=api_key_input.strip())
             
             prompt_text = f"""
             Bertindaklah sebagai Senior Content Director dan TikTok Affiliate Expert. 
@@ -58,7 +67,7 @@ if submitted:
             - Keunggulan Utama: {keunggulan}
             - Gaya Penyampaian: {gaya_penyampaian}
 
-            Catatan: Jika ada gambar terlampir, analisis elemen visual produk tersebut (bentuk, warna, fitur tampak) dan masukkan ke dalam panduan adegan visual dan hook.
+            Catatan: Jika ada gambar terlampir, analisis elemen visual produk tersebut dan masukkan ke dalam panduan adegan visual dan hook.
 
             Berikan output dengan struktur persis seperti ini:
 
@@ -79,19 +88,39 @@ if submitted:
             - 5 Hashtag FYP: 
             """
             
-            # Menyiapkan konten prompt (Teks + Gambar jika ada)
-            contents = [prompt_text]
-            if uploaded_image is not None:
-                img = Image.open(uploaded_image)
-                contents.append(img)
+            # Menyiapkan payload pesan untuk OpenAI API
+            user_content = []
             
-            with st.spinner("AI sedang merancang naskah dan konsep visual..."):
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=contents,
+            if uploaded_image is not None:
+                base64_image = encode_image(uploaded_image)
+                mime_type = uploaded_image.type
+                user_content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime_type};base64,{base64_image}"
+                    }
+                })
+            
+            user_content.append({
+                "type": "text",
+                "text": prompt_text
+            })
+
+            messages = [
+                {"role": "system", "content": "Anda adalah pakar pemasaran TikTok Affiliate berpengalaman."},
+                {"role": "user", "content": user_content}
+            ]
+            
+            with st.spinner("OpenAI GPT-4o sedang merancang naskah dan konsep visual..."):
+                response = client.chat.completions.create(
+                    model="gpt-4o",  # Bisa diganti ke "gpt-4o-mini" untuk versi yang lebih hemat biaya
+                    messages=messages,
+                    max_tokens=1500
                 )
+                
+                output_text = response.choices[0].message.content
                 st.success("Berhasil Membuat Konten!")
-                st.markdown(response.text)
+                st.markdown(output_text)
                 
         except Exception as e:
-            st.error(f"Terjadi kesalahan: {e}. Pastikan GEMINI_API_KEY sudah terpasang di Streamlit Secrets.")
+            st.error(f"Terjadi kesalahan: {e}. Periksa kembali apakah OpenAI API Key Anda valid dan memiliki saldo/kredit aktif.")
