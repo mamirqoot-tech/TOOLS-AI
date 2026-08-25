@@ -25,30 +25,37 @@ with st.form("tiktok_form"):
     submitted = st.form_submit_button("🚀 Buat Skrip Sekarang")
 
 def generate_script_free(produk, promo, style):
+    # Header Perintah Lengkap Otomatis Sesuai Format
+    header_perintah = f"""Gunakan gambar produk yang diberikan sebagai referensi utama dan pertahankan bentuk produk secara akurat. Buat video promosi realistis untuk: {produk}.
+Format: Vertikal 9:16
+Durasi: tepat 20 detik
+Gaya: realistis, profesional, clean, modern, seperti video review produk elektronik
+Voice-over: Bahasa Indonesia, suara natural, jelas, energik
+Musik: tidak ada\n\n"""
+    
     API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
     prompt = f"<s>[INST] Buatkan skrip TikTok Shop singkat untuk produk {produk} dengan keunggulan {promo} dan gaya {style}. Berikan HOOK, ISI, dan CALL TO ACTION dalam bahasa Indonesia. [/INST]"
     
     try:
-        response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 500}}, timeout=12)
+        response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 500}}, timeout=10)
         if response.status_code == 200:
             result = response.json()
             generated = result[0]["generated_text"].replace(prompt, "").strip()
-            # Menyisipkan awalan perintah kustom
-            return f"Buatkan video, Gunakan Media Berikut untuk produk {produk}:\n\n{generated}"
+            return header_perintah + generated
     except Exception:
         pass
     
-    # Fallback Template Otomatis dengan Awalan Perintah Kustom
+    # Template Otomatis Instan jika API sedang padat
     if style == "Spill Harga Murah":
         body = f"""📌 HOOK (Detik 0-3)
 Teks Layar: JANGAN BELI {produk.upper()} SEBELUM LIHAT INI! 😱
 Voiceover: "Jangan beli {produk} sebelum kamu lihat promo hari ini!"
 
-🎬 ISI KONTEN (Detik 3-20)
+🎬 ISI KONTEN (Detik 3-15)
 Visual: Tunjukkan detail produk {produk} secara dekat di depan kamera.
 Voiceover: "Biasanya harganya mahal, tapi khusus hari ini lagi ada promo {promo}. Kualitasnya mantap banget!"
 
-🛒 CALL TO ACTION (Detik 20-30)
+🛒 CALL TO ACTION (Detik 15-20)
 Visual: Tunjuk panah ke arah keranjang kuning.
 Voiceover: "Langsung klik keranjang kuning di kiri bawah sebelum stok promonya habis!"
 
@@ -60,11 +67,11 @@ Hashtag: #{produk.lower().replace(' ', '')} #tiktokshop #racuntiktok #spillbaran
 Teks Layar: SOLUSI BUAT KAMU! ✨
 Voiceover: "Sering bingung cari {produk} yang bagus? Kamu wajib lihat yang satu ini."
 
-🎬 ISI KONTEN (Detik 3-20)
+🎬 ISI KONTEN (Detik 3-15)
 Visual: Perlihatkan keunggulan produk {produk} saat digunakan.
 Voiceover: "Produk ini punya keunggulan {promo}. Dijamin worth it banget buat dimiliki!"
 
-🛒 CALL TO ACTION (Detik 20-30)
+🛒 CALL TO ACTION (Detik 15-20)
 Visual: Tunjukkan jari mengarah ke keranjang kuning.
 Voiceover: "Mumpung lagi ready stock, langsung klik keranjang kuning di kiri bawah ya!"
 
@@ -72,7 +79,7 @@ Voiceover: "Mumpung lagi ready stock, langsung klik keranjang kuning di kiri baw
 Caption: Rekomendasi {produk} terbaik! {promo}.
 Hashtag: #{produk.lower().replace(' ', '')} #tiktokshop #racuntiktok #fyp"""
 
-    return f"Buatkan video, Gunakan Media Berikut untuk produk {produk}:\n\n{body}"
+    return header_perintah + body
 
 # Proses Saat Tombol Diklik
 if submitted:
@@ -89,7 +96,7 @@ if submitted:
             st.success("✨ Skrip Berhasil Dibuat!")
             st.write("### 📋 Hasil Naskah Skrip (Klik Icon Copy di Pojok Kanan Atas Teks):")
             
-            # Menampilkan skrip dengan tombol Copy bawaan Streamlit
+            # Menampilkan skrip dalam bentuk blok kode dengan tombol copy bawaan Streamlit
             st.code(skrip, language="markdown")
             
             # Tombol Download Skrip TXT
