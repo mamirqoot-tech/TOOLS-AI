@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from PIL import Image
 
 # Konfigurasi Tampilan Aplikasi
 st.set_page_config(page_title="AI TikTok Affiliate Generator", layout="centered")
@@ -10,6 +11,13 @@ st.write("Generate skrip, storytelling, dan panduan visual video TikTok Affiliat
 # Form Input Pengguna
 with st.form("affiliate_form"):
     nama_produk = st.text_input("Nama Produk", placeholder="Contoh: Solder 80W / Skincare Brightening")
+    
+    # Fitur Upload Gambar Referensi
+    uploaded_image = st.file_uploader(
+        "Upload Gambar Referensi Produk (Opsional)", 
+        type=["jpg", "jpeg", "png", "webp"],
+        help="Unggah foto produk untuk membantu AI memahami bentuk dan detail visualnya."
+    )
     
     target_audiens = st.multiselect(
         "Target Audiens",
@@ -29,20 +37,19 @@ with st.form("affiliate_form"):
         ]
     )
     
-    api_key = st.text_input("Masukkan API Key Gemini", type="password", help="Dapatkan API key gratis dari Google AI Studio")
-    
     submitted = st.form_submit_button("✨ Generate Konten Sekarang")
 
 # Proses saat Tombol Diklik
 if submitted:
-    if not api_key or not nama_produk:
-        st.error("Mohon isi Nama Produk dan API Key Gemini terlebih dahulu!")
+    if not nama_produk:
+        st.error("Mohon isi Nama Produk terlebih dahulu!")
     else:
         try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            # Mengambil API Key dari Streamlit Secrets
+            api_key = st.secrets["GEMINI_API_KEY"]
+            client = genai.Client(api_key=api_key)
             
-            prompt = f"""
+            prompt_text = f"""
             Bertindaklah sebagai Senior Content Director dan TikTok Affiliate Expert. 
             Buatkan satu paket lengkap pembuatan konten TikTok siap pakai untuk produk berikut:
 
@@ -50,6 +57,8 @@ if submitted:
             - Target Audiens: {', '.join(target_audiens)}
             - Keunggulan Utama: {keunggulan}
             - Gaya Penyampaian: {gaya_penyampaian}
+
+            Catatan: Jika ada gambar terlampir, analisis elemen visual produk tersebut (bentuk, warna, fitur tampak) dan masukkan ke dalam panduan adegan visual dan hook.
 
             Berikan output dengan struktur persis seperti ini:
 
@@ -70,10 +79,19 @@ if submitted:
             - 5 Hashtag FYP: 
             """
             
+            # Menyiapkan konten prompt (Teks + Gambar jika ada)
+            contents = [prompt_text]
+            if uploaded_image is not None:
+                img = Image.open(uploaded_image)
+                contents.append(img)
+            
             with st.spinner("AI sedang merancang naskah dan konsep visual..."):
-                response = model.generate_content(prompt)
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=contents,
+                )
                 st.success("Berhasil Membuat Konten!")
                 st.markdown(response.text)
                 
         except Exception as e:
-            st.error(f"Terjadi kesalahan: {e}")
+            st.error(f"Terjadi kesalahan: {e}. Pastikan GEMINI_API_KEY sudah terpasang di Streamlit Secrets.")
