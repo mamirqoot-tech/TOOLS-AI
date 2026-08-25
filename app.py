@@ -13,7 +13,7 @@ with st.form("tiktok_form"):
     nama_produk = st.text_input("Nama Produk TikTok Shop", placeholder="Contoh: Lampu Tidur Akrilik")
     keunggulan = st.text_area("Keunggulan / Promo Produk", placeholder="Contoh: Gratis ongkir, diskon 50%")
     
-    # 1. MENU UPLOAD REFERENSI GAMBAR
+    # Menu Upload Referensi Gambar Produk
     uploaded_image = st.file_uploader(
         "Upload Referensi Gambar Produk (Opsional)", 
         type=["jpg", "jpeg", "png", "webp"],
@@ -32,13 +32,15 @@ def generate_script_free(produk, promo, style):
         response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 500}}, timeout=12)
         if response.status_code == 200:
             result = response.json()
-            return result[0]["generated_text"].replace(prompt, "").strip()
+            generated = result[0]["generated_text"].replace(prompt, "").strip()
+            # Menyisipkan awalan perintah kustom
+            return f"Buatkan video, Gunakan Media Berikut untuk produk {produk}:\n\n{generated}"
     except Exception:
         pass
     
-    # Fallback Template Otomatis Instan
+    # Fallback Template Otomatis dengan Awalan Perintah Kustom
     if style == "Spill Harga Murah":
-        return f"""📌 HOOK (Detik 0-3)
+        body = f"""📌 HOOK (Detik 0-3)
 Teks Layar: JANGAN BELI {produk.upper()} SEBELUM LIHAT INI! 😱
 Voiceover: "Jangan beli {produk} sebelum kamu lihat promo hari ini!"
 
@@ -54,7 +56,7 @@ Voiceover: "Langsung klik keranjang kuning di kiri bawah sebelum stok promonya h
 Caption: Promo {produk} hari ini! {promo}. Yuk checkout sekarang!
 Hashtag: #{produk.lower().replace(' ', '')} #tiktokshop #racuntiktok #spillbarang"""
     else:
-        return f"""📌 HOOK (Detik 0-3)
+        body = f"""📌 HOOK (Detik 0-3)
 Teks Layar: SOLUSI BUAT KAMU! ✨
 Voiceover: "Sering bingung cari {produk} yang bagus? Kamu wajib lihat yang satu ini."
 
@@ -69,6 +71,8 @@ Voiceover: "Mumpung lagi ready stock, langsung klik keranjang kuning di kiri baw
 📝 CAPTION & HASHTAG
 Caption: Rekomendasi {produk} terbaik! {promo}.
 Hashtag: #{produk.lower().replace(' ', '')} #tiktokshop #racuntiktok #fyp"""
+
+    return f"Buatkan video, Gunakan Media Berikut untuk produk {produk}:\n\n{body}"
 
 # Proses Saat Tombol Diklik
 if submitted:
@@ -85,10 +89,10 @@ if submitted:
             st.success("✨ Skrip Berhasil Dibuat!")
             st.write("### 📋 Hasil Naskah Skrip (Klik Icon Copy di Pojok Kanan Atas Teks):")
             
-            # 2. FEATURE COPY SCRIPT (st.code secara otomatis menyediakan tombol Copy di pojok kanan atas)
+            # Menampilkan skrip dengan tombol Copy bawaan Streamlit
             st.code(skrip, language="markdown")
             
-            # Tombol Tambahan Download Skrip TXT
+            # Tombol Download Skrip TXT
             st.download_button(
                 label="📥 Download Skrip (TXT)",
                 data=skrip,
