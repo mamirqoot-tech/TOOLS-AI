@@ -1,13 +1,12 @@
 import streamlit as st
-import base64
 from openai import OpenAI
 from PIL import Image
 
 # Konfigurasi Tampilan Aplikasi
-st.set_page_config(page_title="AI TikTok Affiliate Generator (OpenAI)", layout="centered")
+st.set_page_config(page_title="AI TikTok Affiliate Generator (DeepSeek)", layout="centered", page_icon="🚀")
 
 st.title("🚀 TikTok Affiliate Content Generator AI")
-st.write("Generate skrip, storytelling, dan panduan visual video TikTok Affiliate dalam hitungan detik menggunakan OpenAI.")
+st.write("Generate skrip, storytelling, dan panduan visual video TikTok Affiliate dalam hitungan detik menggunakan DeepSeek.")
 
 # Form Input Pengguna
 with st.form("affiliate_form"):
@@ -16,7 +15,7 @@ with st.form("affiliate_form"):
     uploaded_image = st.file_uploader(
         "Upload Gambar Referensi Produk (Opsional)", 
         type=["jpg", "jpeg", "png", "webp"],
-        help="Unggah foto produk untuk membantu AI memahami bentuk dan detail visualnya."
+        help="Unggah foto produk untuk referensi Anda."
     )
     
     target_audiens = st.multiselect(
@@ -37,26 +36,30 @@ with st.form("affiliate_form"):
         ]
     )
     
-    # Ambil default API Key dari secrets jika ada
-    default_key = st.secrets.get("OPENAI_API_KEY", "")
-    api_key_input = st.text_input("Masukkan OpenAI API Key", value=default_key, type="password", help="Dapatkan API key dari platform OpenAI")
+    # Ambil default API Key dari Streamlit Secrets jika ada
+    default_key = st.secrets.get("DEEPSEEK_API_KEY", "")
+    api_key_input = st.text_input(
+        "Masukkan DeepSeek API Key", 
+        value=default_key, 
+        type="password", 
+        help="Dapatkan API key dari platform DeepSeek"
+    )
     
     submitted = st.form_submit_button("✨ Generate Konten Sekarang")
-
-# Fungsi pembantu untuk mengonversi gambar ke base64 (Format OpenAI Vision)
-def encode_image(uploaded_file):
-    return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
 
 # Proses saat Tombol Diklik
 if submitted:
     if not nama_produk:
         st.error("Mohon isi Nama Produk terlebih dahulu!")
     elif not api_key_input:
-        st.error("Mohon masukkan OPENAI_API_KEY yang valid!")
+        st.error("Mohon masukkan DeepSeek API Key yang valid!")
     else:
         try:
-            # Inisialisasi Klien OpenAI
-            client = OpenAI(api_key=api_key_input.strip())
+            # Menginisialisasi Client OpenAI yang diarahkan ke Server API DeepSeek
+            client = OpenAI(
+                api_key=api_key_input.strip(),
+                base_url="https://api.deepseek.com"
+            )
             
             prompt_text = f"""
             Bertindaklah sebagai Senior Content Director dan TikTok Affiliate Expert. 
@@ -66,8 +69,6 @@ if submitted:
             - Target Audiens: {', '.join(target_audiens)}
             - Keunggulan Utama: {keunggulan}
             - Gaya Penyampaian: {gaya_penyampaian}
-
-            Catatan: Jika ada gambar terlampir, analisis elemen visual produk tersebut dan masukkan ke dalam panduan adegan visual dan hook.
 
             Berikan output dengan struktur persis seperti ini:
 
@@ -87,33 +88,15 @@ if submitted:
             - Caption Singkat: 
             - 5 Hashtag FYP: 
             """
-            
-            # Menyiapkan payload pesan untuk OpenAI API
-            user_content = []
-            
-            if uploaded_image is not None:
-                base64_image = encode_image(uploaded_image)
-                mime_type = uploaded_image.type
-                user_content.append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:{mime_type};base64,{base64_image}"
-                    }
-                })
-            
-            user_content.append({
-                "type": "text",
-                "text": prompt_text
-            })
 
             messages = [
                 {"role": "system", "content": "Anda adalah pakar pemasaran TikTok Affiliate berpengalaman."},
-                {"role": "user", "content": user_content}
+                {"role": "user", "content": prompt_text}
             ]
             
-            with st.spinner("OpenAI GPT-4o sedang merancang naskah dan konsep visual..."):
+            with st.spinner("DeepSeek AI sedang merancang naskah dan konsep visual..."):
                 response = client.chat.completions.create(
-                    model="gpt-4o",  # Bisa diganti ke "gpt-4o-mini" untuk versi yang lebih hemat biaya
+                    model="deepseek-chat",
                     messages=messages,
                     max_tokens=1500
                 )
@@ -122,5 +105,13 @@ if submitted:
                 st.success("Berhasil Membuat Konten!")
                 st.markdown(output_text)
                 
+                # Fitur Unduh Skrip Langsung
+                st.download_button(
+                    label="📥 Unduh Skrip (Format TXT)",
+                    data=output_text,
+                    file_name=f"skrip_tiktok_{nama_produk.lower().replace(' ', '_')}.txt",
+                    mime="text/plain"
+                )
+                
         except Exception as e:
-            st.error(f"Terjadi kesalahan: {e}. Periksa kembali apakah OpenAI API Key Anda valid dan memiliki saldo/kredit aktif.")
+            st.error(f"Terjadi kesalahan: {e}. Periksa kembali apakah DeepSeek API Key Anda valid dan akun memiliki saldo/kredit aktif.")
