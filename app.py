@@ -3,10 +3,10 @@ import requests
 from PIL import Image
 
 # Konfigurasi Halaman Streamlit
-st.set_page_config(page_title="Generator Skrip TikTok Shop", layout="centered", page_icon="🛍️")
+st.set_page_config(page_title="Generator Skrip TikTok Shop Padat", layout="centered", page_icon="🛍️")
 
-st.title("🛍️ Generator Skrip TikTok Shop")
-st.write("Buat naskah video jualan TikTok Shop secara gratis tanpa API Key.")
+st.title("🛍️ Generator Skrip TikTok Shop Padat")
+st.write("Buat naskah video jualan TikTok Shop ringkas secara gratis tanpa API Key (Maksimal 1000 Kata).")
 
 # Form Input
 with st.form("tiktok_form"):
@@ -38,6 +38,12 @@ def get_recommended_hashtags(style, produk):
         
     return hashtags
 
+def count_words(text):
+    """Fungsi sederhana untuk menghitung kata dalam teks."""
+    if not text:
+        return 0
+    return len(text.split())
+
 def generate_script_free(produk, promo, style):
     # 1. Header Perintah Kustom di Bagian Paling Atas
     header_perintah = f"""Gunakan gambar produk yang diberikan sebagai referensi utama dan pertahankan bentuk produk secara akurat. Buat video promosi realistis untuk: {produk}.
@@ -54,18 +60,31 @@ Gunakan hanya produk dan perlengkapan yang terlihat pada gambar referensi. Janga
     hashtags = get_recommended_hashtags(style, produk)
     
     API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-    prompt = f"<s>[INST] Buatkan skrip TikTok Shop singkat untuk produk {produk} dengan keunggulan {promo} dan gaya {style}. Berikan HOOK, ISI, dan CALL TO ACTION dalam bahasa Indonesia. Gunakan hashtag: {hashtags} [/INST]"
+    
+    # Menambahkan instruksi eksplisit agar AI membuat naskah yang sangat singkat dan padat (maks 1000 kata total)
+    prompt = f"<s>[INST] Buatkan skrip TikTok Shop singkat dan padat untuk produk {produk} dengan keunggulan {promo} dan gaya {style}. Naskah harus fokus pada visual dan voiceover singkat yang tepat 20 detik. Pastikan total teks hasil (termasuk hook, isi, cta, caption, hashtag) sangat ringkas dan tidak melebihi 1000 kata. Berikan output dalam bahasa Indonesia. Gunakan hashtag: {hashtags} [/INST]"
     
     try:
-        response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 500}}, timeout=10)
+        # Tambahkan parameters max_new_tokens agar output AI tidak terlalu panjang
+        response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 700}}, timeout=12)
         if response.status_code == 200:
             result = response.json()
             generated = result[0]["generated_text"].replace(prompt, "").strip()
-            return header_perintah + generated + footer_aturan
+            
+            # Gabungkan skrip lengkap
+            skrip_lengkap = header_perintah + generated + footer_aturan
+            
+            # Validasi panjang kata: Batasi total kata di fungsi generate ini
+            if count_words(skrip_lengkap) > 1000:
+                # Jika melebihi (sangat jarang dengan generator AI gratis), lanjutkan ke fallback logic di bawah
+                pass 
+            else:
+                return skrip_lengkap
+                
     except Exception:
         pass
     
-    # Template Otomatis Instan jika Server API Sedang Padat
+    # Template Otomatis Instan jika Server API Sedang Padat atau Output AI Melebihi Batas
     if style == "Spill Harga Murah":
         body = f"""📌 HOOK (Detik 0-3)
 Teks Layar: JANGAN BELI {produk.upper()} SEBELUM LIHAT INI! 😱
@@ -110,10 +129,13 @@ if submitted:
         if uploaded_image is not None:
             st.image(uploaded_image, caption=f"Gambar Referensi Produk: {nama_produk}", use_container_width=True)
             
-        with st.spinner("Sedang memproses skrip..."):
+        with st.spinner("Sedang memproses skrip padat..."):
             skrip = generate_script_free(nama_produk, keunggulan, gaya)
             
-            st.success("✨ Skrip Berhasil Dibuat!")
+            # Hitung kata untuk info di UI
+            jumlah_kata_hasil = count_words(skrip)
+            
+            st.success(f"✨ Skrip Padat Berhasil Dibuat! (Total: {jumlah_kata_hasil} Kata)")
             st.write("### 📋 Hasil Naskah Skrip (Klik Icon Copy di Pojok Kanan Atas Teks):")
             
             # Menampilkan skrip dalam bentuk blok kode dengan tombol copy bawaan Streamlit
