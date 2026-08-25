@@ -3,122 +3,80 @@ import requests
 from PIL import Image
 
 # Konfigurasi Halaman Streamlit
-st.set_page_config(page_title="Generator Skrip TikTok Shop Padat", layout="centered", page_icon="🛍️")
+st.set_page_config(page_title="Generator Skrip TikTok SANGAT PADAT", layout="centered", page_icon="🛍️")
 
-st.title("🛍️ Generator Skrip TikTok Shop Padat")
-st.write("Buat naskah video jualan TikTok Shop ringkas secara gratis tanpa API Key (Maksimal 1000 Kata).")
+st.title("🛍️ Generator Skrip TikTok Shop SANGAT PADAT")
+st.write("Buat naskah video 20 detik ringkas secara gratis (Target < 200 Kata Total).")
 
 # Form Input
 with st.form("tiktok_form"):
-    nama_produk = st.text_input("Nama Produk TikTok Shop", placeholder="Contoh: Lampu Tidur Akrilik")
-    keunggulan = st.text_area("Keunggulan / Promo Produk", placeholder="Contoh: Gratis ongkir, diskon 50%")
+    nama_produk = st.text_input("Nama Produk TikTok Shop", placeholder="Contoh: Solder 80W / Lampu Akrilik")
+    keunggulan = st.text_area("Keunggulan / Promo Produk", placeholder="Contoh: Gratis ongkir, diskon 50%, cepat panas")
     
     # Menu Upload Referensi Gambar Produk
     uploaded_image = st.file_uploader(
         "Upload Referensi Gambar Produk (Opsional)", 
-        type=["jpg", "jpeg", "png", "webp"],
-        help="Unggah foto produk untuk pratinjau referensi visual."
+        type=["jpg", "jpeg", "png", "webp"]
     )
     
-    gaya = st.selectbox("Gaya Video", ["Hard Sell", "Soft Sell / Storytelling", "Review Jujur", "Spill Harga Murah"])
+    gaya = st.selectbox("Gaya Video", ["Review Jujur", "Hard Sell", "Soft Sell", "Spill Harga Murah"])
     
     submitted = st.form_submit_button("🚀 Buat Skrip Sekarang")
 
 def get_recommended_hashtags(style, produk):
     tag_produk = f"#{produk.lower().replace(' ', '')}"
-    
     if style == "Spill Harga Murah":
-        hashtags = f"{tag_produk} #fypindonesia #viral2026 #trendingindonesia #kontenkekinian #tiktoktrend #harianviral"
-    elif style == "Soft Sell / Storytelling":
-        hashtags = f"{tag_produk} #inspirasi2026 #kontenpositif #idekreatif #kreatorindo #vibespositif #edukatif"
+        hashtags = f"{tag_produk} #fypindonesia #viral2026 #trendingindonesia #tiktoktrend #harianviral"
+    elif style == "Soft Sell":
+        hashtags = f"{tag_produk} #inspirasi2026 #kontenpositif #idekreatif #kreatorindo #edukatif"
     elif style == "Review Jujur":
-        hashtags = f"{tag_produk} #trendingnow #tiktokindo #videoviral #kreatifbanget #foryoupage #contentcreator"
+        hashtags = f"{tag_produk} #trendingnow #tiktokindo #videoviral #kreatifbanget #foryoupage"
     else:  # Hard Sell
-        hashtags = f"{tag_produk} #fypindonesia #foryou #viralindonesia #explorepage #supportlokal #tiktokcommunity"
-        
+        hashtags = f"{tag_produk} #fypindonesia #foryou #viralindonesia #explorepage #supportlokal"
     return hashtags
 
 def count_words(text):
-    """Fungsi sederhana untuk menghitung kata dalam teks."""
     if not text:
         return 0
     return len(text.split())
 
 def generate_script_free(produk, promo, style):
-    # 1. Header Perintah Kustom di Bagian Paling Atas
-    header_perintah = f"""Gunakan gambar produk yang diberikan sebagai referensi utama dan pertahankan bentuk produk secara akurat. Buat video promosi realistis untuk: {produk}.
-Format: Vertikal 9:16
-Durasi: tepat 20 detik
-Gaya: realistis, profesional, clean, modern, seperti video review produk elektronik
-Voice-over: Bahasa Indonesia, suara natural, jelas, energik
-Musik: tidak ada\n\n"""
+    # Header Perintah SANGAT MINIMALIS (Tidak dihitung dalam 100 kata target AI)
+    header_perintah = f"""[PANDUAN VIDEO 20 DETIK: {produk}]
+Gaya: Realistis/Elektronik. VO: Natural, jelas. Musik: Tidak Ada.\n\n"""
 
-    # 2. Catatan Aturan Penting di Bagian Paling Akhir
-    footer_aturan = """\n\nATURAN PENTING
-Gunakan hanya produk dan perlengkapan yang terlihat pada gambar referensi. Jangan mengubah warna, bentuk, jumlah, atau desain produk. Jangan menambahkan produk atau fitur yang tidak terlihat. Jangan membuat klaim berlebihan. Jangan menampilkan api, percikan listrik, atau asap berlebihan. Jangan menggunakan musik. Pastikan voice-over terdengar natural dan seluruh video tepat 20 detik."""
+    # Footer ATURAN PENTING SANGAT MINIMALIS
+    footer_aturan = """\n\nATURAN: Gunakan hanya yang ada di gambar. Bentuk/warna akurat. No klaim berlebihan/api/asap. VO natural, durasi pas 20s."""
 
     hashtags = get_recommended_hashtags(style, produk)
     
     API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
     
-    # Menambahkan instruksi eksplisit agar AI membuat naskah yang sangat singkat dan padat (maks 1000 kata total)
-    prompt = f"<s>[INST] Buatkan skrip TikTok Shop singkat dan padat untuk produk {produk} dengan keunggulan {promo} dan gaya {style}. Naskah harus fokus pada visual dan voiceover singkat yang tepat 20 detik. Pastikan total teks hasil (termasuk hook, isi, cta, caption, hashtag) sangat ringkas dan tidak melebihi 1000 kata. Berikan output dalam bahasa Indonesia. Gunakan hashtag: {hashtags} [/INST]"
+    # Prompt sangat ketat: Minta format tunggal, sangat ringkas, satu paragraf tunggal.
+    prompt = f"<s>[INST] Buatkan skrip TikTok Shop SATU PARAGRAF SAJA, SANGAT SINGKAT (Tepat 20 detik VO) untuk produk {produk} ({promo}). Gaya {style}. Format: Hook, Isi, CTA. Maksimal 150 kata TOTAL. Jangan bertele-tele. Gunakan bahasa Indonesia. Tag: {hashtags} [/INST]"
     
     try:
-        # Tambahkan parameters max_new_tokens agar output AI tidak terlalu panjang
-        response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 700}}, timeout=12)
+        # max_new_tokens diset SANGAT KECIL (misalnya 150) untuk memaksa AI berhenti membuat teks panjang.
+        response = requests.post(API_URL, json={"inputs": prompt, "parameters": {"max_new_tokens": 150}}, timeout=10)
         if response.status_code == 200:
             result = response.json()
             generated = result[0]["generated_text"].replace(prompt, "").strip()
             
             # Gabungkan skrip lengkap
-            skrip_lengkap = header_perintah + generated + footer_aturan
+            skrip_padat = header_perintah + generated + footer_aturan
             
-            # Validasi panjang kata: Batasi total kata di fungsi generate ini
-            if count_words(skrip_lengkap) > 1000:
-                # Jika melebihi (sangat jarang dengan generator AI gratis), lanjutkan ke fallback logic di bawah
-                pass 
-            else:
-                return skrip_lengkap
+            return skrip_padat
                 
     except Exception:
         pass
     
-    # Template Otomatis Instan jika Server API Sedang Padat atau Output AI Melebihi Batas
-    if style == "Spill Harga Murah":
-        body = f"""📌 HOOK (Detik 0-3)
-Teks Layar: JANGAN BELI {produk.upper()} SEBELUM LIHAT INI! 😱
-Voiceover: "Jangan beli {produk} sebelum kamu lihat promo hari ini!"
-
-🎬 ISI KONTEN (Detik 3-15)
-Visual: Tunjukkan detail produk {produk} secara dekat di depan kamera.
-Voiceover: "Biasanya harganya mahal, tapi khusus hari ini lagi ada promo {promo}. Kualitasnya mantap banget!"
-
-🛒 CALL TO ACTION (Detik 15-20)
-Visual: Tunjuk panah ke arah keranjang kuning.
-Voiceover: "Langsung klik keranjang kuning di kiri bawah sebelum stok promonya habis!"
-
-📝 CAPTION & HASHTAG
-Caption: Promo {produk} hari ini! {promo}. Yuk checkout sekarang!
-Hashtag: {hashtags}"""
-    else:
-        body = f"""📌 HOOK (Detik 0-3)
-Teks Layar: SOLUSI BUAT KAMU! ✨
-Voiceover: "Sering bingung cari {produk} yang bagus? Kamu wajib lihat yang satu ini."
-
-🎬 ISI KONTEN (Detik 3-15)
-Visual: Perlihatkan keunggulan produk {produk} saat digunakan.
-Voiceover: "Produk ini punya keunggulan {promo}. Dijamin worth it banget buat dimiliki!"
-
-🛒 CALL TO ACTION (Detik 15-20)
-Visual: Tunjukkan jari mengarah ke keranjang kuning.
-Voiceover: "Mumpung lagi ready stock, langsung klik keranjang kuning di kiri bawah ya!"
-
-📝 CAPTION & HASHTAG
-Caption: Rekomendasi {produk} terbaik! {promo}.
-Hashtag: {hashtags}"""
-
-    return header_perintah + body + footer_aturan
+    # Fallback Template SANGAT SINGKAT (Jika AI Error atau Padat)
+    template_singkat = f"""📌 Hook: {produk} viral, promo {promo}!
+🎬 Isi: Kualitas mantap, cepat panas, hemat listrik. Stok terbatas.
+🛒 CTA: Checkout sekarang di keranjang kuning!
+Tag: {hashtags}"""
+    
+    return header_perintah + template_singkat + footer_aturan
 
 # Proses Saat Tombol Diklik
 if submitted:
@@ -127,24 +85,19 @@ if submitted:
     else:
         # Menampilkan Gambar Referensi jika diunggah
         if uploaded_image is not None:
-            st.image(uploaded_image, caption=f"Gambar Referensi Produk: {nama_produk}", use_container_width=True)
+            st.image(uploaded_image, caption=f"Referensi: {nama_produk}", use_container_width=True)
             
-        with st.spinner("Sedang memproses skrip padat..."):
+        with st.spinner("Sedang memproses skrip sangat padat..."):
             skrip = generate_script_free(nama_produk, keunggulan, gaya)
+            jumlah_kata = count_words(skrip)
             
-            # Hitung kata untuk info di UI
-            jumlah_kata_hasil = count_words(skrip)
+            st.success(f"✨ Skrip Sangat Padat Berhasil Dibuat! (Total: {jumlah_kata} Kata)")
+            st.write("### 📋 Naskah (Klik Icon Copy di Pojok Kanan Atas):")
             
-            st.success(f"✨ Skrip Padat Berhasil Dibuat! (Total: {jumlah_kata_hasil} Kata)")
-            st.write("### 📋 Hasil Naskah Skrip (Klik Icon Copy di Pojok Kanan Atas Teks):")
-            
-            # Menampilkan skrip dalam bentuk blok kode dengan tombol copy bawaan Streamlit
             st.code(skrip, language="markdown")
-            
-            # Tombol Download Skrip TXT
             st.download_button(
                 label="📥 Download Skrip (TXT)",
                 data=skrip,
-                file_name=f"skrip_{nama_produk.lower().replace(' ', '_')}.txt",
+                file_name=f"skrip_padat_{nama_produk.lower().replace(' ', '_')}.txt",
                 mime="text/plain"
             )
